@@ -17,7 +17,7 @@ library(zoo)
 # install_github("ahb108/rcarbon")
 # Note that the updated version may not work or generate slightly different result. 
 
-install_github("ahb108/rcarbon@f8a4bfb")
+install_github("ahb108/rcarbon@6023ec4")
 library(rcarbon)
 
 
