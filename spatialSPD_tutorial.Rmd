@@ -1,0 +1,160 @@
+---
+title : "Spatial Permutation Test of SPDRD: a quick guide"
+author : "Enrico R. Crema"
+output : pdf_document
+---
+
+This document briefly describes how to carry out a spatial permutation test of SPDRD (Summed Probability Distribution of Radiocarbon Dates) using the `SPpermTest()` function in the [*rcarbon* package](https://github.com/ahb108/rcarbon). 
+
+# Step 0: Installing *rcarbon*
+
+The *rcarbon* package is currently under development and subject to updates. The version used in the paper can be installed with the following command:
+
+```{r install, eval=FALSE}
+library(devtools)
+install_github("ahb108/rcarbon@f8a4bfb")
+```
+Alternatively the most up-to-date version of *rcarbon* can be installed with the following:
+
+```{r install2, eval=FALSE}
+library(devtools)
+install_github("ahb108/rcarbon")
+```
+Notice that some function settings might change in the future versions of *rcarbon*. Users are advised to read the help documentation if using updated version of the package. 
+
+# Step 1: Data Preparation
+
+We will use as a sample data the [EUROEVOL dataset](https://openarchaeologydata.metajnl.com/articles/10.5334/joad.40/) which is pre-loaded in *rcarbon*:
+
+```{r data_load} 
+library(rcarbon) #load the rcarbon package
+data(euroevol) # load the EUROEVOL dataset
+```
+The EUROEVOL dataset is stored here as a *data.frame* class object where each row represents a different radiocarbon sample. The key attributes relevant for this tutorial are: the radiocarbon age (column *C14Age*), its error (column *C14SD*), an unique identifier of the site from which the sample has been recovered (column *SiteID*), and its spatial coordinates (columns *Latitude* and *Longitude*). Users are advised to have similarly a structured table as primary input data.
+
+In order to reproduce the analysis in the paper we first subset our data using only samples dated between 7200 and 4200 C14 BP, corresponding approximately to 8000-5000 cal BP:
+
+```{r subsetting}
+euroevol=subset(euroevol,C14Age<=7200&C14Age>=4200)
+```
+
+# Step 2: Calibrate 14C Dates and create site bins
+
+The `calibrate()` function calibrates single dates or a set with a variety of options, including a choice of the calibration curve or whether the dates are normalised or not. It produces a *CalDates* class object, which is the main argument of many of the commands in the *rcarbon* package. Here is an example of a very basic use of the `calibrate()` function:
+
+```{r example_calibration}
+adate <- calibrate(ages=3400,errors=30,calCurves="intcal13")
+summary(adate)
+plot(adate,HPD=TRUE,credMass=0.95)
+```
+
+Multiple dates can be calibrated by supplying matching vectors for each of these parameters. The following calibrates all the EUROEVOL dates without normalisation (see paper for discussions), using the *intcal13* calibration curve (the default setting, hence does not need to be specified):
+
+```{r calibrate_euroevol} 
+eurodates <- calibrate(euroevol$C14Age,euroevol$C14SD,normalised=FALSE,verbose=FALSE)
+```
+
+Notice that the `calibrate()` function allows for multicore processing. For more details please read the function's help documentation using the `?calibrate` command.
+
+Next we need to create define site bins, which can be loosely defined as a subset of radiocarbon dates associated with the same occupation event at a given site. In practice this is a vector of characters with the same length as the number of radiocarbon dates, with a specific naming convention where the site unique identifier is followed by an underscore and a number indicating the specific bin. For example if site "S123" has 5 dates, two for the first bin and three for the second one, the corresponding character vector would be "S123_1","S123_1","S123_2","S123_2", and "S123_2". The function `binPrep()` can automatically generate this vector by aggregating radiocarbon dates using a hierarchical cluster analysis with a user defined cut value. Below is an example with a cut value of 200 years:
+
+```{r binning}
+eurobins <- binPrep(sites=euroevol$SiteID,ages=euroevol$C14Age,h=200)
+```
+
+# Step 3: Prepare spatial data and calculate weights
+
+Next we create a *SpatialPoints* or a *SpatialPointsDataFrame* class object from our site coordinates. This is later required as an argument for the `SPpermTest()` function but can also be used to compute a distance matrix from which we can generate our matrix of spatial weights (also needed for `SPpermTest()`). We'll start by creating a *SpatialPoints* object from our initial *data.frame*:
+
+```{r site_to_sp}
+# Create a data.frame of site locations
+sites <- unique(data.frame(id=euroevol$SiteID,lat=euroevol$Latitude,lon=euroevol$Longitude))
+rownames(sites) <- sites$id
+sites <- sites[,-1]
+
+# Convert to a SpatialPoints class object:
+library(sp)
+coordinates(sites) <- c("lon","lat")
+proj4string(sites) <- CRS("+proj=longlat +datum=WGS84")
+
+```
+Next, we generate a distance matrix, and compute the Gaussian spatial weights, using in this case a bandwidth of 100km:
+
+```{r distance_weights}
+#Compute distance matrix
+d <- spDists(sites,sites,longlat=TRUE)
+
+#Compute spatial weights
+w <- spweights(d,h=100)
+```
+
+# Step 4: Execute the *SPpermTest()* function
+
+We are now ready to execute our main function. We first need to define several arguments: the number of permutations; a vector indicating the chronological break points; and whether the permutations are done by location (i.e. randomly shuffling all bins associated to a given site together) or by bin (i.e. randomly shuffling bins without keeping associations based on site location). The example below uses the same setting as in the paper (500 year chronological blocks and permutation by location), except for the number of simulations, which is reduced to 1,000 iterations (instead of 10,000). As for the `calibrate()` function it is possible to run this function using multiple cores using the *doParallel* package (using 3 cores in this case):
+
+```{r main_analysis}
+library(doParallel)
+breaks <- seq(8000,5000,-500) #500 year blocks
+timeRange <- c(8000,5000) #set the timerange of analysis in calBP, older date first
+
+res <- SPpermTest(calDates=eurodates,bins=eurobins,timeRange=timeRange,locations=sites,permute="locations",nsim=1000,breaks=breaks,spatialweights=w,ncores=3,verbose=FALSE)
+```
+
+# Step 5: Plotting Results
+The output of the `SPpermTest()` function has its own `plot()` method which allows a variety of options (for more details read `?plot.spatialTest`). The function plots only the point locations, so it is strongly suggested to pre-load and use the `add=TRUE` argument. We start, in this case, by retrieving a basemap using the *rworldmap* package:
+
+```{r retrieve_baseplot}
+library(rworldmap)
+base <- getMap(resolution="low") #extract basemap
+#extract bounding coordinates of the site distribution
+xrange <- bbox(sites)[1,]
+yrange <- bbox(sites)[2,]
+```
+
+The plot function requires the definition of an *index* value (a numerical integer representing the i-th transition, thus `index=1` means first transition, in this case the transition from the time block 8000-7500 to the time block 7500-7000 calBP), and an *option* argument, which indicates what needs to be plotted (either the results of the statistical tests or the raw estimates of geometric growth rates and their corresponding legends). The scripts below provide some examples:
+
+```{r plot.spatialTests,fig.align="center"}
+## Spatial Permutation Test for Transition 4
+plot(base,col="antiquewhite3",border="antiquewhite3",xlim=xrange,ylim=yrange)
+plot(res,index=4,option="test",add=TRUE)
+title("6.5-6 kBP to 6-5.5 kBP")
+
+## Geometric Growth Rate for Transition 4
+plot(base,col="antiquewhite3",border="antiquewhite3",xlim=xrange,ylim=yrange)
+plot(res,index=4,option="raw",add=TRUE,breakRange=c(-0.005,0.005))
+title("6.5-6 kBP to 6-5.5 kBP")
+
+## Permutation Test for Transition 5 with Legend:
+layout(matrix(c(1,2),ncol=2),width=c(1,0.7))
+plot(base,col="antiquewhite3",border="antiquewhite3",xlim=xrange,ylim=yrange)
+plot(res,index=5,option="test",add=TRUE)
+title("6-5.5 kBP to 5.5-5 kBP")
+plot(res,option="testlegend",legSize=1.3)
+
+## Geometric Growth Rate for Transition 5 with Legend:
+layout(matrix(c(1,2),ncol=2),width=c(1,0.7))
+plot(base,col="antiquewhite3",border="antiquewhite3",xlim=xrange,ylim=yrange)
+plot(res,index=5,option="raw",add=TRUE,breakRange=c(-0.005,0.005))
+title("6-5.5 kBP to 5.5-5 kBP")
+plot(res,option="rawlegend",breakRange=c(-0.005,0.005))
+```
+
+For more information regarding the `SPpermTest()` and related functions please read the help documentation of the *rcarbon* package.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
