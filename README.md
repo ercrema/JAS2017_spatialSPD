@@ -40,7 +40,7 @@ other attached packages:
 * R.oo_1.21.0       
 * R.methodsS3_1.7.1 
 
-_Note_ The specific commit version of the rcarbon package (currently in development) is specified in each file.
+_Note_ The specific commit version of the [rcarbon](https://github.com/ahb108/rcarbon) package (currently in development) is specified in each file.
 
 loaded via a namespace (and not attached):
 * compiler_3.4.1   
