@@ -17,7 +17,6 @@ Code: MIT (http://opensource.org/licenses/MIT year: 2014, copyright holder: Enri
 
 ## Dependencies
 R version 3.4.1 (2017-06-30)
-Platform: x86_64-pc-linux-gnu (64-bit)
 
 attached base packages:
 * parallel
