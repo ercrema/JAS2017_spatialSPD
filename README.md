@@ -8,7 +8,7 @@ Enrico R. Crema (enrico.crema@gmail.com)
 
 ## Contents
 * Script for generating figures 1~5 
-* Rmarkdown document with instruction for using the core functions in the `rcarbon` package.
+* Rmarkdown document with instruction for using the core functions in the _rcarbon_(https://github.com/ahb108/rcarbon) package.
 
 ## Licences
 Text: CC-BY (http://creativecommons.org/licenses/by/4.0/)
