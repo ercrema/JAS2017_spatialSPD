@@ -1,7 +1,7 @@
 # R Scripts for the paper "Spatio-temporal approaches to archaeological radiocarbon dates" by Crema, E.R., Bevan, A., and Shennan, S.
 
 ## Paper Reference 
-[Crema, E. R., Bevan, A., and Shennan, S. (2017). Spatio-temporal approaches to archaeological radiocarbon dates. Journal of Archaeological Science, 87, 1-9.](https://doi.org/10.1016/j.jas.2017.09.007)
+Crema, E. R., Bevan, A., and Shennan, S. (2017). Spatio-temporal approaches to archaeological radiocarbon dates. Journal of Archaeological Science, 87, 1-9. DOI:10.1016/j.jas.2017.09.007
 
 ## Author of the Repository:
 Enrico R. Crema (enrico.crema@gmail.com)
