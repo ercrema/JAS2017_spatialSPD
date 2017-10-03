@@ -17,7 +17,7 @@ library(zoo)
 # install_github("ahb108/rcarbon")
 # Note that the updated version may not work or generate slightly different result. 
 
-install_github("ahb108/rcarbon@6023ec4")
+install_github("ahb108/rcarbon@1530ae2")
 library(rcarbon)
 
 
@@ -98,7 +98,7 @@ t=numeric(length=n)
 
 for (i in 1:n)
     {
-        tmp=arrayIndex(samplePoints[i],dim=dim(baseMatrix))
+        tmp=arrayInd(samplePoints[i],.dim=dim(baseMatrix))
         t[i]=tmp[1]
         x[i]=tmp[2]
         y[i]=tmp[3]
@@ -164,13 +164,13 @@ for (z in 1:length(zones))
 {
 tmp=subset(samplePoints,zone==zones[z])
 bin=binPrep(sites=tmp$SiteID,ages=tmp$c14age,h=200)
-cal=calibrate(ages=tmp$c14age,errors=as.integer(tmp$c14error),timeRange=timeRange,normalised=FALSE)
+cal=calibrate(x=tmp$c14age,errors=as.integer(tmp$c14error),timeRange=timeRange,normalised=FALSE)
 assign(paste("spd.",zones[z],sep=""),spd(x=cal,timeRange=timeRange,bins=bin,spdnormalised=TRUE))
 
 
 tmp=subset(samplePointsThinned,zone==zones[z])
 bin=binPrep(sites=tmp$SiteID,ages=tmp$c14age,h=200)
-cal=calibrate(ages=tmp$c14age,errors=as.integer(tmp$c14error),timeRange=timeRange,normalised=FALSE)
+cal=calibrate(x=tmp$c14age,errors=as.integer(tmp$c14error),timeRange=timeRange,normalised=FALSE)
 assign(paste("spdT.",zones[z],sep=""),spd(x=cal,timeRange=timeRange,bins=bin,spdnormalised=TRUE))
 }
 
@@ -274,8 +274,8 @@ weightsT6=spweights(distSamplesT,h=6)
 bin=binPrep(sites=samplePoints$SiteID,ages=samplePoints$c14age,h=200)
 binThinned=binPrep(sites=samplePointsThinned$SiteID,ages=samplePointsThinned$c14age,h=200)
 #calibrate dates
-cal=calibrate(ages=samplePoints$c14age,errors=as.integer(samplePoints$c14error),timeRange=c(7000,3000),normalised=FALSE)  #calibrate dates
-calThinned=calibrate(ages=samplePointsThinned$c14age,errors=as.integer(samplePointsThinned$c14error),timeRange=c(7000,3000),normalised=FALSE)
+cal=calibrate(x=samplePoints$c14age,errors=as.integer(samplePoints$c14error),timeRange=c(7000,3000),normalised=FALSE)  #calibrate dates
+calThinned=calibrate(x=samplePointsThinned$c14age,errors=as.integer(samplePointsThinned$c14error),timeRange=c(7000,3000),normalised=FALSE)
 
 ## Spatial permutation tests
 result.locations=SPpermTest(calDates=cal,bins=bin,timeRange=c(7000,3000),locations=samplePointsSITES.sp,spatialweights=weights6,nsim=10000,breaks=seq(7000,3000,-500),permute="locations",ncores=3)
@@ -463,7 +463,7 @@ spatialweights=spweights(distSamples,h=100)
 
 ### Binning and Calibration###
 bins=binPrep(sites=euroevol$SiteID,ages=euroevol$C14Age,h=200)  
-calDates=calibrate(ages=euroevol$C14Age,errors=euroevol$C14SD,timeRange=yearRange,normalised=FALSE)
+calDates=calibrate(x=euroevol$C14Age,errors=euroevol$C14SD,timeRange=yearRange,normalised=FALSE)
 
 
 ### Compute SPD and geometric growth ratee ###

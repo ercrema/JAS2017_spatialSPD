@@ -12,7 +12,7 @@ The *rcarbon* package is currently under development and subject to updates. The
 
 ```{r install, eval=FALSE}
 library(devtools)
-install_github("ahb108/rcarbon@6023ec4")
+install_github("ahb108/rcarbon@1530ae2")
 ```
 Alternatively the most up-to-date version of *rcarbon* can be installed with the following:
 
@@ -43,7 +43,7 @@ euroevol=subset(euroevol,C14Age<=7200&C14Age>=4200)
 The `calibrate()` function calibrates single dates or a set with a variety of options, including a choice of the calibration curve or whether the dates are normalised or not. It produces a *CalDates* class object, which is the main argument of many of the commands in the *rcarbon* package. Here is an example of a very basic use of the `calibrate()` function:
 
 ```{r example_calibration}
-adate <- calibrate(ages=3400,errors=30,calCurves="intcal13")
+adate <- calibrate(x=3400,errors=30,calCurves="intcal13")
 summary(adate)
 plot(adate,HPD=TRUE,credMass=0.95)
 ```
@@ -97,7 +97,9 @@ library(doParallel)
 breaks <- seq(8000,5000,-500) #500 year blocks
 timeRange <- c(8000,5000) #set the timerange of analysis in calBP, older date first
 
-res <- SPpermTest(calDates=eurodates,bins=eurobins,timeRange=timeRange,locations=sites,permute="locations",nsim=1000,breaks=breaks,spatialweights=w,ncores=3,verbose=FALSE)
+res <- SPpermTest(calDates=eurodates,bins=eurobins,timeRange=timeRange,
+		  locations=sites,permute="locations",nsim=1000,
+		  breaks=breaks,spatialweights=w,ncores=3,verbose=FALSE)
 ```
 
 # Step 5: Plotting Results
